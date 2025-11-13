@@ -1,6 +1,3 @@
-from textwrap import dedent
-
-app_tsx = dedent(r'''
 import React, { useMemo, useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,6 +7,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Download, Upload, LogOut } from "lucide-react";
+
 import PaymentsDialog, { PaymentsStore, type Payment } from "@/components/PaymentsDialog";
 import type { AptRow } from "@/types";
 
@@ -742,6 +740,27 @@ export default function App() {
                       версия.
                     </li>
                   </ul>
+                  <div className="text-sm text-gray-700">
+                +   {PaymentsStore.load().length === 0 ? (
+                +     <p className="text-gray-500">Няма записани плащания все още.</p>
+                +   ) : (
+                +     <table className="w-full text-sm">
+                +       <thead><tr className="text-left">
+                +         <th className="py-2">Дата</th><th>Ап.</th><th>Трим.</th><th className="text-right">Сума</th>
+                +       </tr></thead>
+                +       <tbody>
+                +         {PaymentsStore.load().slice().reverse().map((p, i) => (
+                +           <tr key={i} className="border-t">
+                +             <td className="py-2">{new Date(p.ts).toLocaleString("bg-BG")}</td>
+                +             <td>{p.apt_id}</td>
+                +             <td>{["I","II","III","IV"][(p.quarter-1)]} {p.year}</td>
+                +             <td className="text-right">{p.amount.toFixed(2)} лв</td>
+                +           </tr>
+                +         ))}
+                +       </tbody>
+                +     </table>
+                +   )}
+                + </div>
                 </CardContent>
               </Card>
             )}
