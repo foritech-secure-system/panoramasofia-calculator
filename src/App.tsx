@@ -812,9 +812,8 @@ B203,office,60,0.91,0,2203,18,7,6,8,12,0,0,2`}
   );
 }
 
-
-path = "/mnt/data/App.tsx"
+/**path = "/mnt/data/App.tsx"
 with open(path, "w", encoding="utf-8") as f:
     f.write(app_tsx)
-
 path
+**/
