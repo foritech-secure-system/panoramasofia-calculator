@@ -560,15 +560,6 @@ export default function App() {
                 </Card>
               </>
             )}
-            {apt && (
-              <PaymentsDialog
-              open={payOpen}
-              onOpenChange={setPayOpen}
-              apt={apt}
-              quarter={quarter}
-              amount={monthly * 3}
-             />
-            )}
              {/* SECTION: Apartments only */}
             {section === "apartments" && (
               <Card className="shadow-sm">
@@ -741,26 +732,26 @@ export default function App() {
                     </li>
                   </ul>
                   <div className="text-sm text-gray-700">
-                +   {PaymentsStore.load().length === 0 ? (
-                +     <p className="text-gray-500">Няма записани плащания все още.</p>
-                +   ) : (
-                +     <table className="w-full text-sm">
-                +       <thead><tr className="text-left">
-                +         <th className="py-2">Дата</th><th>Ап.</th><th>Трим.</th><th className="text-right">Сума</th>
-                +       </tr></thead>
-                +       <tbody>
-                +         {PaymentsStore.load().slice().reverse().map((p, i) => (
-                +           <tr key={i} className="border-t">
-                +             <td className="py-2">{new Date(p.ts).toLocaleString("bg-BG")}</td>
-                +             <td>{p.apt_id}</td>
-                +             <td>{["I","II","III","IV"][(p.quarter-1)]} {p.year}</td>
-                +             <td className="text-right">{p.amount.toFixed(2)} лв</td>
-                +           </tr>
-                +         ))}
-                +       </tbody>
-                +     </table>
-                +   )}
-                + </div>
+                   {PaymentsStore.load().length === 0 ? (
+                     <p className="text-gray-500">Няма записани плащания все още.</p>
+                   ) : (
+                     <table className="w-full text-sm">
+                       <thead><tr className="text-left">
+                         <th className="py-2">Дата</th><th>Ап.</th><th>Трим.</th><th className="text-right">Сума</th>
+                       </tr></thead>
+                       <tbody>
+                         {PaymentsStore.load().slice().reverse().map((p, i) => (
+                           <tr key={i} className="border-t">
+                             <td className="py-2">{new Date(p.ts).toLocaleString("bg-BG")}</td>
+                             <td>{p.apt_id}</td>
+                             <td>{["I","II","III","IV"][(p.quarter-1)]} {p.year}</td>
+                             <td className="text-right">{p.amount.toFixed(2)} лв</td>
+                           </tr>
+                         ))}
+                       </tbody>
+                     </table>
+                   )}
+                 </div>
                 </CardContent>
               </Card>
             )}
