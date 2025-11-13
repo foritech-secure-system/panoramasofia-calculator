@@ -1,46 +1,62 @@
-import React, { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
+import React, { useMemo, useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import type { Payment } from "@/types";
-import { money } from "@/lib/calc";
+import type { AptRow } from "@/types";
 
-interface Props {
-  aptId: string | null;
-  payments: Payment[];
-  onClose: () => void;
-  onAdd: (p: Payment) => void;
+const LS_PAY = "psofia.v01.payments";
+
+export type Payment = {
+  apt_id: string;
+  quarter: 1|2|3|4;
+  year: number;
+  amount: number;
+  ts: string;        // ISO datetime
+};
+
+function loadPayments(): Payment[] {
+  try { return JSON.parse(localStorage.getItem(LS_PAY) || "[]"); } catch { return []; }
+}
+function savePayments(list: Payment[]) {
+  localStorage.setItem(LS_PAY, JSON.stringify(list));
 }
 
-export default function PaymentsDialog({ aptId, payments, onClose, onAdd }: Props) {
-  const [form, setForm] = useState({ period: "", amount: "", date: "" });
-  const add = () => {
-    if (!aptId || !form.period || !form.amount || !form.date) return;
-    onAdd({ id: "p" + Math.random().toString(36).slice(2,8), apt_id: aptId, period: form.period, amount: Number(form.amount), date: form.date });
-    setForm({ period: "", amount: "", date: "" });
+export default function PaymentsDialog({
+  open, onOpenChange, apt, quarter, amount
+}: { open: boolean; onOpenChange: (o:boolean)=>void; apt: AptRow; quarter: 1|2|3|4; amount: number; }) {
+  const year = useMemo(()=> new Date().getFullYear(), []);
+  const [busy, setBusy] = useState(false);
+
+  const markPaid = () => {
+    setBusy(true);
+    const list = loadPayments();
+    list.push({ apt_id: apt.apt_id, quarter, year, amount, ts: new Date().toISOString() });
+    savePayments(list);
+    setBusy(false);
+    onOpenChange(false);
+    alert("Отбелязано като платено.");
   };
 
   return (
-    <Dialog open={!!aptId} onOpenChange={(o)=>!o && onClose()}>
-      <DialogContent className="max-w-xl">
-        <DialogHeader><DialogTitle>Плащания — {aptId ?? ""}</DialogTitle></DialogHeader>
-        <div className="space-y-3">
-          {payments.filter(p=>p.apt_id===aptId).map(p=>(
-            <div key={p.id} className="flex justify-between border rounded p-2 text-sm">
-              <div>{p.period} — {money(p.amount)} лв</div>
-              <div className="text-gray-500">{p.date}</div>
-            </div>
-          ))}
-          <div className="border rounded p-3 grid md:grid-cols-3 gap-2 text-sm">
-            <Input placeholder="Период (напр. 2025-Q4)" value={form.period} onChange={e=>setForm(v=>({...v, period:e.target.value}))}/>
-            <Input placeholder="Сума (лв)"                value={form.amount} onChange={e=>setForm(v=>({...v, amount:e.target.value}))}/>
-            <Input placeholder="Дата (YYYY-MM-DD)"       value={form.date}   onChange={e=>setForm(v=>({...v, date:e.target.value}))}/>
-            <div className="md:col-span-3 flex justify-end">
-              <Button onClick={add}>Добави</Button>
-            </div>
-          </div>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Плащане — {apt.apt_id}</DialogTitle>
+          <DialogDescription>Маркиране на платено за тримесечие {["I","II","III","IV"][quarter-1]} {year}</DialogDescription>
+        </DialogHeader>
+        <div className="text-sm space-y-2">
+          <div className="flex justify-between"><span>Сума за плащане:</span><b>{amount.toFixed(2)} лв</b></div>
+          <div className="flex justify-between"><span>Апартамент:</span><span>{apt.apt_id}</span></div>
+          <div className="flex justify-between"><span>Тримесечие:</span><span>{["I","II","III","IV"][quarter-1]} {year}</span></div>
+        </div>
+        <div className="flex gap-2 justify-end pt-3">
+          <Button variant="outline" onClick={()=>onOpenChange(false)}>Затвори</Button>
+          <Button onClick={markPaid} disabled={busy}>Отбележи като платено</Button>
         </div>
       </DialogContent>
     </Dialog>
   );
 }
+
+// util за други екрани
+export const PaymentsStore = { load: loadPayments, save: savePayments };
+export type { Payment };
