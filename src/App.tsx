@@ -156,7 +156,7 @@ function parseCSV(text: string): AptRow[] {
     "fund_repair",
     "garage_clean",
     "garage_light",
-    "misc",
+//    "misc",
   ];
   const missing = req.filter((r) => idx(r) === -1);
   if (missing.length) throw new Error("Липсват колони: " + missing.join(", "));
