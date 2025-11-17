@@ -136,12 +136,16 @@ function money(x: number) {
 
 // Импорт от CSV
 function parseCSV(text: string): AptRow[] {
-  const lines = text.split(/\\r?\\n/).filter(Boolean);
+  // разделяме по редове, махаме празните
+  const lines = text.split(/\r?\n/).filter(Boolean);
   const header = lines.shift();
   if (!header) return DEMO;
-  const cols = header.split(",").map((s) => s.trim());
-  const idx = (name: string) => cols.findIndex((c) => c.toLowerCase() === name.toLowerCase());
 
+  const cols = header.split(",").map((s) => s.trim());
+  const idx = (name: string) =>
+    cols.findIndex((c) => c.toLowerCase() === name.toLowerCase());
+
+  // ЗАДЪЛЖИТЕЛНИ колони (без misc)
   const req = [
     "apt_id",
     "type",
@@ -156,15 +160,21 @@ function parseCSV(text: string): AptRow[] {
     "fund_repair",
     "garage_clean",
     "garage_light",
-//    "misc",
   ];
   const missing = req.filter((r) => idx(r) === -1);
-  if (missing.length) throw new Error("Липсват колони: " + missing.join(", "));
+  if (missing.length) {
+    throw new Error("Липсват колони: " + missing.join(", "));
+  }
+
+  // misc е опционална
+  const miscIdx = idx("misc");
+  const hasMisc = miscIdx !== -1;
 
   const rows: AptRow[] = [];
   for (const line of lines) {
     const parts = line.split(",").map((s) => s.trim());
-    if (parts.length !== cols.length) continue;
+    if (!parts.length) continue;
+
     const row: AptRow = {
       apt_id: parts[idx("apt_id")],
       type: (parts[idx("type")] as AptType) || "home",
@@ -179,12 +189,15 @@ function parseCSV(text: string): AptRow[] {
       fund_repair: Number(parts[idx("fund_repair")] || FUND_2026),
       garage_clean: Number(parts[idx("garage_clean")] || 0),
       garage_light: Number(parts[idx("garage_light")] || 0),
-      misc: Number(parts[idx("misc")] || 0),
+      misc: hasMisc ? Number(parts[miscIdx] || 0) : 0,
     };
+
     rows.push(row);
   }
+
   return rows;
 }
+
 
 type Section = "dashboard" | "apartments" | "budget" | "contracts" | "history";
 
