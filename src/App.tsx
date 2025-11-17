@@ -136,17 +136,18 @@ function money(x: number) {
 
 // Импорт от CSV
 function parseCSV(text: string): AptRow[] {
-  // разделяме по редове, махаме празните
   const lines = text.split(/\r?\n/).filter(Boolean);
   const header = lines.shift();
   if (!header) return DEMO;
 
   const cols = header.split(",").map((s) => s.trim());
+
+  // helper: връща индекс на колоната (case-insensitive)
   const idx = (name: string) =>
     cols.findIndex((c) => c.toLowerCase() === name.toLowerCase());
 
-  // ЗАДЪЛЖИТЕЛНИ колони (без misc)
-  const req = [
+  // тук са само ЗАДЪЛЖИТЕЛНИТЕ
+  const required = [
     "apt_id",
     "type",
     "area_m2",
@@ -160,36 +161,44 @@ function parseCSV(text: string): AptRow[] {
     "fund_repair",
     "garage_clean",
     "garage_light",
+    // !!! НЯМА "misc" тук
   ];
-  const missing = req.filter((r) => idx(r) === -1);
+
+  const missing = required.filter((r) => idx(r) === -1);
   if (missing.length) {
     throw new Error("Липсват колони: " + missing.join(", "));
   }
 
-  // misc е опционална
-  const miscIdx = idx("misc");
-  const hasMisc = miscIdx !== -1;
-
   const rows: AptRow[] = [];
+
   for (const line of lines) {
     const parts = line.split(",").map((s) => s.trim());
-    if (!parts.length) continue;
+    if (parts.length !== cols.length) continue;
+
+    const getNum = (name: string, def = 0) => {
+      const i = idx(name);
+      if (i === -1) return def;
+      const v = Number(parts[i] || def);
+      return Number.isFinite(v) ? v : def;
+    };
+
+    const miscIdx = idx("misc"); // ОПЦИОНАЛНА
 
     const row: AptRow = {
       apt_id: parts[idx("apt_id")],
       type: (parts[idx("type")] as AptType) || "home",
-      area_m2: Number(parts[idx("area_m2")] || 0),
-      ideal_parts_pct: Number(parts[idx("ideal_parts_pct")] || 0),
+      area_m2: getNum("area_m2"),
+      ideal_parts_pct: getNum("ideal_parts_pct"),
       has_garage: /^(1|да|true|yes)$/i.test(parts[idx("has_garage")]),
       pin: parts[idx("pin")] || "0000",
-      base_common: Number(parts[idx("base_common")] || 0),
-      elevator: Number(parts[idx("elevator")] || 0),
-      cleaning: Number(parts[idx("cleaning")] || 0),
-      security: Number(parts[idx("security")] || 0),
-      fund_repair: Number(parts[idx("fund_repair")] || FUND_2026),
-      garage_clean: Number(parts[idx("garage_clean")] || 0),
-      garage_light: Number(parts[idx("garage_light")] || 0),
-      misc: hasMisc ? Number(parts[miscIdx] || 0) : 0,
+      base_common: getNum("base_common"),
+      elevator: getNum("elevator"),
+      cleaning: getNum("cleaning"),
+      security: getNum("security"),
+      fund_repair: getNum("fund_repair", FUND_2026),
+      garage_clean: getNum("garage_clean"),
+      garage_light: getNum("garage_light"),
+      misc: miscIdx === -1 ? 0 : getNum("misc"), // ако няма колона, = 0
     };
 
     rows.push(row);
@@ -197,6 +206,7 @@ function parseCSV(text: string): AptRow[] {
 
   return rows;
 }
+
 
 
 type Section = "dashboard" | "apartments" | "budget" | "contracts" | "history";
